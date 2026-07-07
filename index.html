@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>BiRAGAS · Causal Intelligence Platform</title>
+<meta name="description" content="BiRAGAS — Biomedical Causal Intelligence Platform. Four biological layers, three technology foundations, one platform. Where correlation ends and causation begins.">
+
+<style>
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: #0A0A0A;
+    color: #F5F0E8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: contain;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0A0A0A; }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+  /* Boot splash */
+  #boot {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #0A0A0A; color: #F5F0E8;
+    z-index: 0;
+  }
+  #boot .kicker { font-size: 10px; letter-spacing: 0.3em; color: #888; font-family: monospace; }
+  #boot .logo { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-top: 14px; text-align: center; max-width: 90vw; }
+  #boot .spin { margin-top: 24px; width: 22px; height: 22px; border: 2px solid #333; border-top-color: #3B82F6; border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Sidebar (desktop only) */
+  .sidebar-desk { width: 290px; flex: none; background: #111; border-right: 1px solid #1F1F1F; overflow-y: auto; padding: 14px 0; }
+  .sb-item { display: block; width: 100%; background: transparent; border: none; border-left: 3px solid transparent; padding: 12px 20px; text-align: left; cursor: pointer; font-family: inherit; transition: background 0.12s ease; }
+  .sb-item:hover { background: #161616; }
+
+  /* Hamburger button */
+  .hamburger { display: none; background: transparent; border: 1px solid #333; width: 42px; height: 42px; border-radius: 6px; cursor: pointer; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+  .hamburger:active { background: #1A1A1A; }
+
+  /* Drawer */
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.22s ease; }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(86vw, 360px); background: #111; z-index: 310; transform: translateX(-100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(0,0,0,0.75); }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 14px 18px; border-bottom: 1px solid #1F1F1F; display: flex; justify-content: space-between; align-items: center; background: #0F0F0F; padding-top: max(14px, env(safe-area-inset-top, 14px)); }
+  .drawer-list { flex: 1; overflow-y: auto; padding: 6px 0; padding-bottom: max(20px, env(safe-area-inset-bottom, 20px)); }
+  .drawer-item { display: block; width: 100%; background: transparent; border: none; border-left: 3px solid transparent; padding: 14px 18px; text-align: left; cursor: pointer; font-family: inherit; }
+  .drawer-item:active { background: #1A1A1A; }
+
+  /* Header */
+  .hd { padding: 14px 28px 12px; background: linear-gradient(135deg, #0A0A0A 0%, #0F1828 100%); border-bottom: 1px solid #1F1F1F; }
+  .hd-row { display: flex; align-items: center; gap: 14px; }
+  .hd-title h1 { margin: 0; font-size: 22px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.4px; }
+  .hd-title .k { font-size: 10px; letter-spacing: 0.25em; color: #888; text-transform: uppercase; font-family: monospace; margin-bottom: 4px; }
+  .hd-title .t { font-size: 12px; color: #999; font-style: italic; margin-top: 3px; }
+  .hd-controls { margin-left: auto; }
+
+  /* Tabs (section section-counter chip) */
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; background: #1A1A1A; border: 1px solid #2A2A2A; font-family: monospace; font-size: 10px; color: #C8C4BC; border-radius: 3px; letter-spacing: 0.06em; }
+
+  /* Main scroll */
+  .main { flex: 1; overflow-y: auto; padding: 30px 44px 140px; -webkit-overflow-scrolling: touch; }
+
+  /* Data table */
+  .tbl-wrap { margin: 22px 0; border: 1px solid #1F1F1F; background: #0F0F0F; overflow: hidden; }
+  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tbl { border-collapse: collapse; width: 100%; min-width: 100%; }
+  .tbl th { background: #161616; padding: 12px 14px; text-align: left; font-size: 10px; letter-spacing: 0.18em; color: #888; text-transform: uppercase; font-family: monospace; font-weight: 700; border-bottom: 2px solid var(--accent, #3B82F6); white-space: nowrap; }
+  .tbl td { padding: 12px 14px; font-size: 12.5px; color: #E8E4DC; border-bottom: 1px solid #1A1A1A; vertical-align: top; line-height: 1.45; }
+  .tbl td:first-child { color: var(--accent, #3B82F6); font-weight: 700; white-space: nowrap; }
+  .tbl tr:last-child td { border-bottom: none; }
+
+  /* Mobile breakpoint */
+  @media (max-width: 900px) {
+    .sidebar-desk { display: none !important; }
+    .hamburger { display: inline-flex !important; }
+    .hd { padding: 14px 16px 10px; padding-top: max(14px, env(safe-area-inset-top, 14px)); }
+    .hd-title h1 { font-size: 16px !important; }
+    .hd-title .t { display: none; }
+    .hd-title .k { font-size: 9px !important; }
+    .main { padding: 22px 16px 200px; }
+    .tbl th { padding: 10px 12px; font-size: 9.5px; }
+    .tbl td { padding: 10px 12px; font-size: 12px; }
+    .tbl td:first-child { font-size: 12px; }
+    h2.headline { font-size: 20px !important; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+
+  /* Floating pill nav */
+  .pill-nav {
+    position: fixed;
+    left: 14px; right: 14px;
+    bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+    display: flex; gap: 10px;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .pill-nav button {
+    pointer-events: auto;
+    flex: 1;
+    height: 56px;
+    border-radius: 28px;
+    border: 1px solid #2A2A2A;
+    background: rgba(15,15,15,0.96);
+    color: #F5F0E8;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 16px 44px rgba(0,0,0,0.6);
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .pill-nav button:active { transform: scale(0.97); }
+  .pill-nav button.next { background: var(--accent, #3B82F6); color: #0A0A0A; border-color: var(--accent, #3B82F6); }
+  .pill-nav button:disabled { opacity: 0.35; cursor: default; }
+
+  @media (min-width: 901px) {
+    .pill-nav { left: auto; right: 28px; width: 280px; }
+  }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 20px 0; max-width: 1100px; }
+  .kpi { background: #0F0F0F; border: 1px solid #1F1F1F; border-top: 2px solid var(--accent, #3B82F6); padding: 16px 14px; }
+  .kpi-k { font-size: 22px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.5px; line-height: 1.1; }
+  .kpi-v { font-size: 10px; color: #888; margin-top: 6px; font-family: monospace; text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.4; }
+
+  /* Charts */
+  .chart-card { background: #0F0F0F; border: 1px solid #1F1F1F; padding: 22px; margin: 22px 0; max-width: 1100px; }
+  .chart-title { font-size: 11px; letter-spacing: 0.2em; color: #888; text-transform: uppercase; font-family: monospace; margin-bottom: 14px; font-weight: 700; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #C8C4BC; font-family: monospace; }
+  .legend-dot { width: 12px; height: 12px; display: inline-block; border-radius: 2px; flex-shrink: 0; }
+
+  @media (max-width: 900px) {
+    .chart-card { padding: 16px 12px; margin: 16px 0; }
+    .chart-title { font-size: 10px; margin-bottom: 10px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .kpi { padding: 12px 10px; }
+    .kpi-k { font-size: 17px; }
+    .kpi-v { font-size: 9px; margin-top: 4px; }
+    .legend-item { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="kicker">CAUSAL INTELLIGENCE · MMXXVI</div>
+  <div class="logo">BiRAGAS PLATFORM</div>
+  <div class="spin"></div>
+</div>
+
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+const DATA = window.__PLAYBOOK_DATA__;
+const sections = DATA.sections;
+
+// ─── CHART COMPONENTS ───
+
+function BarH({ data, title, unit }) {
+  const max = Math.max(...data.map(d => d.value)) * 1.05;
+  const W = 720, H = 36 * data.length + 30, leftPad = 200;
+  return (
+    <div className="chart-card">
+      {title && <div className="chart-title">{title}</div>}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMinYMin meet" style={{ width: "100%", height: "auto", display: "block" }}>
+        {data.map((d, i) => {
+          const y = i * 36 + 12;
+          const barW = Math.max(2, (d.value / max) * (W - leftPad - 20));
+          const val = typeof d.value === "number" ? (d.value < 10 ? +d.value.toFixed(2) : d.value.toLocaleString()) : d.value;
+          return (
+            <g key={i}>
+              <text x={leftPad - 12} y={y + 18} textAnchor="end" fill="#C8C4BC" fontSize="12" fontWeight="500">{d.label}</text>
+              <rect x={leftPad} y={y + 4} width={barW} height={22} fill={d.color || "#3B82F6"} rx="2" />
+              <text x={leftPad + barW + 8} y={y + 19} fill="#F5F0E8" fontSize="12" fontFamily="monospace" fontWeight="700">{val}{unit ? unit : ""}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function BarVGrouped({ x, series, title }) {
+  const all = series.flatMap(s => s.data);
+  const max = Math.max(...all) * 1.18;
+  const W = 740, H = 340, padBottom = 60, padTop = 20, padX = 40;
+  const groupW = (W - padX * 2) / x.length;
+  const barW = groupW * 0.85 / series.length;
+  return (
+    <div className="chart-card">
+      {title && <div className="chart-title">{title}</div>}
+      <div className="legend">
+        {series.map((s, i) => (
+          <div key={i} className="legend-item"><span className="legend-dot" style={{ background: s.color }}></span>{s.label}</div>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMinYMin meet" style={{ width: "100%", height: "auto", display: "block" }}>
+        {x.map((xLabel, gi) => {
+          const gx = padX + gi * groupW + groupW * 0.075;
+          return (
+            <g key={gi}>
+              {series.map((s, si) => {
+                const v = s.data[gi] || 0;
+                const h = (v / max) * (H - padTop - padBottom);
+                const bx = gx + si * barW;
+                const by = H - padBottom - h;
+                return <rect key={si} x={bx} y={by} width={barW - 2} height={h} fill={s.color} rx="1" />;
+              })}
+              <text x={gx + groupW * 0.42} y={H - padBottom + 22} textAnchor="middle" fill="#C8C4BC" fontSize="11" fontFamily="monospace" fontWeight="600">{xLabel}</text>
+            </g>
+          );
+        })}
+        <line x1={padX} y1={H - padBottom} x2={W - padX} y2={H - padBottom} stroke="#333" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+function LineChart({ x, series, title }) {
+  const all = series.flatMap(s => s.data);
+  const max = Math.max(...all) * 1.15;
+  const W = 740, H = 340, padBottom = 50, padTop = 30, padX = 50;
+  const innerW = W - padX * 2, innerH = H - padTop - padBottom;
+  const stepX = innerW / Math.max(1, x.length - 1);
+  return (
+    <div className="chart-card">
+      {title && <div className="chart-title">{title}</div>}
+      <div className="legend">
+        {series.map((s, i) => (
+          <div key={i} className="legend-item"><span className="legend-dot" style={{ background: s.color, width: 18, height: 3, borderRadius: 1 }}></span>{s.label}</div>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMinYMin meet" style={{ width: "100%", height: "auto", display: "block" }}>
+        {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+          const y = padTop + innerH * t;
+          return (
+            <g key={i}>
+              <line x1={padX} y1={y} x2={W - padX} y2={y} stroke="#1F1F1F" strokeWidth="1" />
+              <text x={padX - 8} y={y + 4} textAnchor="end" fill="#666" fontSize="10" fontFamily="monospace">{Math.round(max * (1 - t))}</text>
+            </g>
+          );
+        })}
+        {x.map((xLabel, i) => (
+          <text key={i} x={padX + i * stepX} y={H - padBottom + 20} textAnchor="middle" fill="#C8C4BC" fontSize="11" fontFamily="monospace" fontWeight="600">{xLabel}</text>
+        ))}
+        {series.map((s, si) => {
+          const points = s.data.map((v, i) => [padX + i * stepX, padTop + innerH * (1 - v / max)]);
+          const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
+          const last = points[points.length - 1];
+          return (
+            <g key={si}>
+              <path d={path} stroke={s.color} strokeWidth="2.5" fill="none" />
+              {points.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill={s.color} stroke="#0A0A0A" strokeWidth="2" />)}
+              <text x={last[0] + 8} y={last[1] + 4} fill={s.color} fontSize="11" fontFamily="monospace" fontWeight="700">{s.data[s.data.length - 1]}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function renderChart(chart) {
+  if (!chart) return null;
+  if (chart.type === "bar-h") return <BarH data={chart.data} title={chart.title} unit={chart.unit} />;
+  if (chart.type === "bar-v-grouped") return <BarVGrouped x={chart.x} series={chart.series} title={chart.title} />;
+  if (chart.type === "line") return <LineChart x={chart.x} series={chart.series} title={chart.title} />;
+  return null;
+}
+
+function App() {
+  const [idx, setIdx] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [audioOn, setAudioOn] = useState(false);
+  const touchRef = useRef(null);
+  const mainRef = useRef(null);
+  const audioRef = useRef(null);
+
+  const cur = sections[idx];
+  const accent = cur.color;
+
+  useEffect(() => { document.body.style.overflow = drawerOpen ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [drawerOpen]);
+  useEffect(() => { const b = document.getElementById("boot"); if (b) b.style.display = "none"; }, []);
+  useEffect(() => { if (mainRef.current) mainRef.current.scrollTop = 0; }, [idx]);
+
+  // Audio sync — autoplay current section when ON
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
+    if (!audioOn) return;
+    a.src = `audio/${cur.id}.mp3`;
+    a.load();
+    const p = a.play();
+    if (p) p.catch(() => {});
+  }, [idx, audioOn]);
+
+  // Keyboard
+  useEffect(() => {
+    const h = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); setIdx(i => Math.min(sections.length - 1, i + 1)); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); setIdx(i => Math.max(0, i - 1)); }
+      else if (e.key.toLowerCase() === "m") setDrawerOpen(v => !v);
+      else if (e.key === "Escape") setDrawerOpen(false);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+
+  // Touch swipe
+  const onTouchStart = (e) => { touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() }; };
+  const onTouchEnd = (e) => {
+    const s = touchRef.current; if (!s) return;
+    const dx = e.changedTouches[0].clientX - s.x;
+    const dy = e.changedTouches[0].clientY - s.y;
+    const dt = Date.now() - s.t;
+    touchRef.current = null;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 700) {
+      if (dx < 0) setIdx(i => Math.min(sections.length - 1, i + 1));
+      else setIdx(i => Math.max(0, i - 1));
+    }
+  };
+
+  return (
+    <div style={{ "--accent": accent, minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0A0A0A" }}>
+
+      {/* HEADER */}
+      <div className="hd">
+        <div className="hd-row">
+          <button className="hamburger" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="4" width="16" height="2" fill="#F5F0E8" rx="1"/>
+              <rect x="2" y="9" width="16" height="2" fill="#F5F0E8" rx="1"/>
+              <rect x="2" y="14" width="16" height="2" fill="#F5F0E8" rx="1"/>
+            </svg>
+          </button>
+          <div className="hd-title" style={{ flex: 1, minWidth: 0 }}>
+            <div className="k">SAAS · STREAM I · MMXXVI</div>
+            <h1>{DATA.title}</h1>
+            <div className="t">{DATA.subtitle}</div>
+          </div>
+          <div className="hd-controls" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              onClick={() => setAudioOn(v => !v)}
+              aria-label={audioOn ? "Mute narration" : "Play narration"}
+              style={{
+                background: audioOn ? accent : "transparent",
+                color: audioOn ? "#0A0A0A" : "#C8C4BC",
+                border: `1px solid ${audioOn ? accent : "#333"}`,
+                padding: "8px 12px",
+                fontFamily: "monospace",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                cursor: "pointer",
+                borderRadius: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}>
+              <span style={{ fontSize: 13 }}>{audioOn ? "🔊" : "🔇"}</span>
+              <span>{audioOn ? "ON" : "OFF"}</span>
+            </button>
+            <span className="chip">{String(idx + 1).padStart(2, "0")} / {String(sections.length).padStart(2, "0")}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* DRAWER */}
+      <div className={`drawer-overlay ${drawerOpen ? "open" : ""}`} onClick={() => setDrawerOpen(false)} />
+      <div className={`drawer ${drawerOpen ? "open" : ""}`}>
+        <div className="drawer-head">
+          <div>
+            <div style={{ fontSize: 9, letterSpacing: "0.25em", color: "#888", textTransform: "uppercase", fontFamily: "monospace", marginBottom: 4 }}>NAVIGATION</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#F5F0E8" }}>13 sections</div>
+          </div>
+          <button onClick={() => setDrawerOpen(false)} aria-label="Close" style={{ background: "transparent", border: "1px solid #333", color: "#F5F0E8", width: 36, height: 36, borderRadius: 4, cursor: "pointer", fontSize: 22, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+        </div>
+        <div className="drawer-list">
+          {sections.map((s, i) => {
+            const active = i === idx;
+            return (
+              <button key={s.id} className="drawer-item" onClick={() => { setIdx(i); setDrawerOpen(false); }} style={{ background: active ? "#1A1A1A" : "transparent", borderLeftColor: active ? s.color : "transparent" }}>
+                <div style={{ fontSize: 9, fontFamily: "monospace", color: active ? s.color : "#666", letterSpacing: "0.1em", marginBottom: 3, fontWeight: 700 }}>{s.sheetName}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: active ? s.color : "#C8C4BC", letterSpacing: "-0.2px", lineHeight: 1.25 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: active ? "#C8C4BC" : "#666", marginTop: 3, fontFamily: "monospace", lineHeight: 1.35 }}>{s.subtitle}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* desktop sidebar */}
+        <div className="sidebar-desk">
+          {sections.map((s, i) => {
+            const active = i === idx;
+            return (
+              <button key={s.id} className="sb-item" onClick={() => setIdx(i)} style={{ background: active ? "#1A1A1A" : "transparent", borderLeftColor: active ? s.color : "transparent" }}>
+                <div style={{ fontSize: 9, fontFamily: "monospace", color: active ? s.color : "#666", letterSpacing: "0.1em", marginBottom: 3, fontWeight: 700 }}>{s.sheetName}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: active ? s.color : "#C8C4BC", letterSpacing: "-0.2px" }}>{s.label}</div>
+                <div style={{ fontSize: 10.5, color: active ? "#C8C4BC" : "#666", marginTop: 3, fontFamily: "monospace" }}>{s.subtitle}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* main */}
+        <div className="main" ref={mainRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ touchAction: "pan-y" }} key={idx}>
+          <div style={{ fontSize: 11, letterSpacing: "0.25em", color: accent, textTransform: "uppercase", fontFamily: "monospace", marginBottom: 8, fontWeight: 700 }}>
+            {cur.sheetName} · {cur.label}
+          </div>
+          <h2 className="headline" style={{ fontSize: 26, fontWeight: 700, color: "#F5F0E8", margin: "0 0 10px", lineHeight: 1.2, letterSpacing: "-0.4px" }}>
+            {cur.headline}
+          </h2>
+          {cur.body && (
+            <div style={{ fontSize: 14, color: "#C8C4BC", lineHeight: 1.6, marginBottom: 22, whiteSpace: "pre-wrap", maxWidth: 820 }}>{cur.body}</div>
+          )}
+
+          {/* KPI tiles */}
+          {cur.kpis && cur.kpis.length > 0 && (
+            <div className="kpi-grid">
+              {cur.kpis.map((kpi, i) => (
+                <div key={i} className="kpi">
+                  <div className="kpi-k">{kpi.k}</div>
+                  <div className="kpi-v">{kpi.v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Chart */}
+          {cur.chart && renderChart(cur.chart)}
+
+          {/* Data table */}
+          {cur.tableHeaders && cur.tableHeaders.length > 0 && cur.tableRows.length > 0 && (
+            <div className="tbl-wrap">
+              <div className="tbl-scroll">
+                <table className="tbl">
+                  <thead>
+                    <tr>{cur.tableHeaders.map((h, i) => <th key={i}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {cur.tableRows.map((row, ri) => (
+                      <tr key={ri}>
+                        {row.map((cell, ci) => (
+                          <td key={ci}>{typeof cell === "number" ? cell.toLocaleString() : cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Note */}
+          {cur.note && (
+            <div style={{ background: "#0F0F0F", borderLeft: `3px solid ${accent}`, padding: "14px 18px", marginTop: 18, fontSize: 13, color: "#C8C4BC", lineHeight: 1.55, maxWidth: 1000 }}>
+              {cur.note}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* AUDIO */}
+      <audio ref={audioRef} preload="auto" />
+
+      {/* PILL NAV */}
+      <div className="pill-nav">
+        <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}>← Prev</button>
+        <button className="next" onClick={() => setIdx(i => Math.min(sections.length - 1, i + 1))} disabled={idx === sections.length - 1}>Next →</button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+<script id="playbook-data" type="application/json">{
+ "title": "BiRAGAS · Causal Intelligence Platform",
+ "subtitle": "Where correlation ends and causation begins · platform walkthrough",
+ "tagline": "Four biological layers · three technology foundations · one platform",
+ "sections": [
+  {
+   "id": "01_overview",
+   "sheetName": "01 · Overview",
+   "label": "Overview & Contents",
+   "subtitle": "The operating system · raw data → causal discovery",
+   "color": "#3B82F6",
+   "headline": "BiRAGAS · Biomedical Causal Intelligence",
+   "body": "WHERE CORRELATION ENDS AND CAUSATION BEGINS\nA complete therapeutic discovery operating system. Raw sequencing data enters at one end; fragmented biological signals are harmonized, validated, and transformed into causal intelligence. At the other end, users receive validated causal disease maps, ranked therapeutic targets, patient-stratified predictions, FDA-aligned regulatory-grade evidence reports, and a fully traceable evidence trail supporting every finding.\nCONTENTS",
+   "tableHeaders": [
+    "Section",
+    "Focus"
+   ],
+   "tableRows": [
+    [
+     "02 · The Thesis",
+     "Correlation vs. causation — what BiRAGAS actually delivers"
+    ],
+    [
+     "03 · Three Foundations",
+     "Agentic orchestration · causal engine · enterprise infrastructure"
+    ],
+    [
+     "04 · Agentic Orchestration",
+     "How a coordinated network of engines runs behind one platform"
+    ],
+    [
+     "05 · Four-Layer Architecture",
+     "The end-to-end pipeline · modules per layer"
+    ],
+    [
+     "06 · Layer 1 — Data Acquisition",
+     "Cohort retrieval · FASTQ processing · harmonization"
+    ],
+    [
+     "07 · Layer 2 — Biological Analysis",
+     "Expression, cells, pathways, multi-omics, CRISPR"
+    ],
+    [
+     "08 · Layer 3 — Causality Engine",
+     "Directionality, influence, intervention potential"
+    ],
+    [
+     "09 · In-Silico Perturbation",
+     "Population forecasting + patient-level precision"
+    ],
+    [
+     "10 · Layer 4 — Reporting & CCS",
+     "Causal Confidence Scoring on every finding"
+    ],
+    [
+     "11 · Evidence & Visualizations",
+     "Volcano · MA · heat map · deconvolution · temporal"
+    ],
+    [
+     "12 · Infrastructure & Security",
+     "Confidential AI · SOC2-aligned · IP protection"
+    ],
+    [
+     "13 · The Answer",
+     "From raw data to causal discovery in hours, not years"
+    ]
+   ],
+   "note": "Source: BiRAGAS platform walkthrough — Ayass Bioscience. Content reflects the platform as presented; no financial projections are implied on this page.",
+   "kpis": [
+    {
+     "k": "4",
+     "v": "integrated biological layers"
+    },
+    {
+     "k": "3",
+     "v": "technology foundations"
+    },
+    {
+     "k": "17",
+     "v": "specialized analysis modules"
+    },
+    {
+     "k": "Hours",
+     "v": "to causal discovery, not years"
+    }
+   ],
+   "narration": "BiRAGAS is a complete therapeutic discovery operating system. Raw sequencing data enters at one end; at the other, users receive validated causal disease maps, ranked therapeutic targets, patient-stratified predictions, and FDA-aligned evidence reports — with a fully traceable evidence trail. Four biological layers, three technology foundations, one platform. This is where correlation ends and causation begins."
+  },
+  {
+   "id": "02_thesis",
+   "sheetName": "02 · Thesis",
+   "label": "The Thesis",
+   "subtitle": "Not another AI model",
+   "color": "#C8A560",
+   "headline": "The infrastructure that finally tells biology's actual story",
+   "body": "We generate more biological data today than at any point in human history — yet we still struggle to answer one fundamental question: what is actually causing this disease?\nTraditional biological analysis identifies correlations and associations. BiRAGAS identifies the mechanisms driving disease and the intervention points most likely to produce therapeutic impact. We are not building another AI model. We are building the infrastructure that tells biology's actual story.",
+   "tableHeaders": [
+    "What BiRAGAS delivers",
+    "What it is"
+   ],
+   "tableRows": [
+    [
+     "Validated causal disease maps",
+     "The reconstructed causal wiring diagram of disease, evidence-grounded"
+    ],
+    [
+     "Ranked therapeutic targets",
+     "The intervention points most likely to produce therapeutic impact"
+    ],
+    [
+     "Patient-stratified predictions",
+     "Which patients are most likely to benefit from which strategy"
+    ],
+    [
+     "FDA-aligned evidence reports",
+     "Regulatory-grade dossiers scored for causal confidence"
+    ],
+    [
+     "Traceable evidence trail",
+     "Every finding supported by an auditable chain of evidence"
+    ]
+   ],
+   "note": "Correlation tells you two things move together. Causation tells you which one to act on.",
+   "kpis": [
+    {
+     "k": "Causation",
+     "v": "not correlation"
+    },
+    {
+     "k": "Drivers",
+     "v": "vs. reactive biology"
+    },
+    {
+     "k": "5",
+     "v": "validated output types"
+    },
+    {
+     "k": "Auditable",
+     "v": "every finding traceable"
+    }
+   ],
+   "narration": "We generate more biological data than ever, yet still struggle to answer one question: what is actually causing this disease? Traditional analysis finds correlations. BiRAGAS identifies the mechanisms driving disease and the intervention points most likely to produce impact — delivered as causal disease maps, ranked targets, patient-stratified predictions, and FDA-aligned evidence reports."
+  },
+  {
+   "id": "03_foundations",
+   "sheetName": "03 · Foundations",
+   "label": "Three Foundations",
+   "subtitle": "Three integrated layers, one platform",
+   "color": "#60A5FA",
+   "headline": "Three technology foundations within a single platform",
+   "body": "What makes BiRAGAS different is that it combines three integrated technology foundations behind one platform — an agentic AI orchestration system, a causal biology engine, and an enterprise cloud infrastructure with Confidential AI, security controls, and intellectual-property protection.",
+   "tableHeaders": [
+    "Foundation",
+    "Role"
+   ],
+   "tableRows": [
+    [
+     "Agentic AI orchestration",
+     "Interprets scientific questions, builds execution plans, coordinates modules, and generates evidence-grounded reports — without manual workflow construction"
+    ],
+    [
+     "Causal biology engine",
+     "Multiple sophisticated biological engines operating together to move analysis from correlation to validated causation"
+    ],
+    [
+     "Enterprise cloud infrastructure",
+     "Confidential AI architecture, SOC2-aligned security controls, and intellectual-property protection"
+    ]
+   ],
+   "note": "Four biological layers. Three technology foundations. One platform. One answer.",
+   "kpis": [
+    {
+     "k": "3",
+     "v": "technology foundations"
+    },
+    {
+     "k": "Confidential AI",
+     "v": "secure architecture"
+    },
+    {
+     "k": "SOC2",
+     "v": "aligned controls"
+    },
+    {
+     "k": "IP",
+     "v": "protection built in"
+    }
+   ],
+   "narration": "What makes BiRAGAS different is that it combines three integrated technology foundations within a single platform: an agentic AI orchestration system, a causal biology engine, and an enterprise cloud infrastructure with Confidential AI, security controls, and intellectual-property protection."
+  },
+  {
+   "id": "04_orchestration",
+   "sheetName": "04 · Orchestration",
+   "label": "Agentic Orchestration",
+   "subtitle": "A coordinated network of engines",
+   "color": "#2563EB",
+   "headline": "What looks like one platform is a network of specialized engines",
+   "body": "Every analysis inside BiRAGAS is coordinated by an agentic AI orchestration layer operating behind the platform. It interprets scientific questions, identifies the required analytical modules, builds the execution plan automatically, coordinates data flow between modules, validates dependencies, and generates evidence-grounded reports — with no manual workflow construction. What users experience as a single platform is actually a coordinated network of specialized analytical engines working together.",
+   "tableHeaders": [
+    "Step",
+    "What the orchestration layer does"
+   ],
+   "tableRows": [
+    [
+     "Interpret",
+     "Reads the scientific question and objective"
+    ],
+    [
+     "Plan",
+     "Identifies required modules and builds the execution plan automatically"
+    ],
+    [
+     "Coordinate",
+     "Routes and sequences data flow between modules"
+    ],
+    [
+     "Validate",
+     "Checks dependencies across the pipeline"
+    ],
+    [
+     "Report",
+     "Generates evidence-grounded reports without manual assembly"
+    ]
+   ],
+   "note": "No manual workflow construction — the platform assembles and runs the pipeline itself.",
+   "kpis": [
+    {
+     "k": "17",
+     "v": "modules coordinated"
+    },
+    {
+     "k": "Automatic",
+     "v": "execution planning"
+    },
+    {
+     "k": "0",
+     "v": "manual workflow construction"
+    },
+    {
+     "k": "Evidence-grounded",
+     "v": "reports by default"
+    }
+   ],
+   "narration": "Every analysis is coordinated by an agentic AI orchestration layer. It interprets the scientific question, identifies the required modules, builds the execution plan automatically, coordinates data flow, validates dependencies, and generates evidence-grounded reports — with no manual workflow construction. What looks like a single platform is a coordinated network of specialized engines working together."
+  },
+  {
+   "id": "05_architecture",
+   "sheetName": "05 · Architecture",
+   "label": "Four-Layer Architecture",
+   "subtitle": "The end-to-end pipeline",
+   "color": "#3B82F6",
+   "headline": "From raw data to causal intelligence — four integrated layers",
+   "body": "The platform operates across four integrated layers: data acquisition and processing, biological analysis, causal inference, and validation and reporting. Together they transform raw biological data into actionable causal intelligence — seventeen specialized analysis modules, coordinated as one system.",
+   "tableHeaders": [
+    "Layer",
+    "What it does"
+   ],
+   "tableRows": [
+    [
+     "Layer 1 · Data acquisition",
+     "Ingestion, FASTQ processing, and harmonization of raw sequencing data"
+    ],
+    [
+     "Layer 2 · Biological analysis",
+     "Expression, prioritization, pathways, cell resolution, multi-omics, CRISPR"
+    ],
+    [
+     "Layer 3 · Causal inference",
+     "GWAS/MR, temporal, DAG, centrality, calculus, in-silico perturbation"
+    ],
+    [
+     "Layer 4 · Validation & reporting",
+     "Orchestration, Causal Confidence Scoring, evidence-grounded reports"
+    ]
+   ],
+   "note": "Module counts below are the analysis modules described per layer (3 + 7 + 7 = 17).",
+   "kpis": [
+    {
+     "k": "4",
+     "v": "integrated layers"
+    },
+    {
+     "k": "17",
+     "v": "analysis modules"
+    },
+    {
+     "k": "7",
+     "v": "biological-analysis engines"
+    },
+    {
+     "k": "7",
+     "v": "causal-inference engines"
+    }
+   ],
+   "chart": {
+    "type": "bar-h",
+    "title": "Analysis modules per layer (3 + 7 + 7 = 17)",
+    "data": [
+     {
+      "label": "Layer 2 · Biological analysis",
+      "value": 7,
+      "color": "#60A5FA"
+     },
+     {
+      "label": "Layer 3 · Causality engine",
+      "value": 7,
+      "color": "#C8A560"
+     },
+     {
+      "label": "Layer 1 · Data acquisition",
+      "value": 3,
+      "color": "#93C5FD"
+     }
+    ]
+   },
+   "narration": "The platform operates across four integrated layers: data acquisition, biological analysis, causal inference, and validation and reporting. Together they transform raw biological data into actionable causal intelligence — seventeen specialized analysis modules coordinated as one system: three for data acquisition, seven for biological analysis, and seven for causal inference."
+  },
+  {
+   "id": "06_layer1",
+   "sheetName": "06 · Layer 1",
+   "label": "Layer 1 · Data Acquisition",
+   "subtitle": "Data alone does not reveal causation",
+   "color": "#93C5FD",
+   "headline": "Layer 1 — Data acquisition and processing",
+   "body": "Biology produces enormous amounts of data, but data alone does not reveal causation. Layer 1 turns raw, noisy, heterogeneous input into standardized, analysis-ready biological data.",
+   "tableHeaders": [
+    "Module",
+    "What it does"
+   ],
+   "tableRows": [
+    [
+     "Cohort retrieval",
+     "Ingests uploaded patient data sets, or connects to major genomic repositories to retrieve clinically annotated cohorts automatically"
+    ],
+    [
+     "FASTQ processing",
+     "Transforms raw sequencing output into standardized, analysis-ready data through automated quality control, alignment, and quantification"
+    ],
+    [
+     "Data harmonization",
+     "Detects and removes hidden technical variation across hospitals, platforms, and time periods so results reflect real biology, not artifacts"
+    ]
+   ],
+   "note": "Standardized inputs are the precondition for trustworthy downstream causal analysis.",
+   "kpis": [
+    {
+     "k": "3",
+     "v": "data-acquisition modules"
+    },
+    {
+     "k": "QC",
+     "v": "align + quantify, automated"
+    },
+    {
+     "k": "Batch",
+     "v": "technical noise removed"
+    },
+    {
+     "k": "Repositories",
+     "v": "auto-retrieval of cohorts"
+    }
+   ],
+   "narration": "Biology produces enormous amounts of data, but data alone does not reveal causation. Layer one ingests patient data or retrieves annotated cohorts automatically, transforms raw FASTQ sequencing output into analysis-ready data through quality control, alignment, and quantification, and harmonizes across hospitals and platforms — removing hidden technical variation so downstream results reflect real biology."
+  },
+  {
+   "id": "07_layer2",
+   "sheetName": "07 · Layer 2",
+   "label": "Layer 2 · Biological Analysis",
+   "subtitle": "Publication-grade insight at every stage",
+   "color": "#60A5FA",
+   "headline": "Layer 2 — Biological analysis at institutional scale",
+   "body": "The system handles massive biological input. Each analytical module can operate independently or as part of the larger workflow, generating publication-grade biological insight at every stage of analysis.",
+   "tableHeaders": [
+    "Module",
+    "What it does"
+   ],
+   "tableRows": [
+    [
+     "Differential expression",
+     "Compares gene activity between healthy and diseased cohorts into a statistically validated expression profile"
+    ],
+    [
+     "Gene prioritization",
+     "Surfaces the genes that actually matter using network influence, disease associations, and functional evidence"
+    ],
+    [
+     "Pathway analysis",
+     "Identifies the biological processes and molecular pathways dysregulated across the disease system as a whole"
+    ],
+    [
+     "Cell-type deconvolution",
+     "Resolves mixed tissue signals, quantifying each cell population's contribution to disease biology"
+    ],
+    [
+     "Single-cell pipeline",
+     "Resolves activity at individual-cell level — rare populations, hidden subgroups, cell-specific mechanisms"
+    ],
+    [
+     "Multi-omics pipeline",
+     "Integrates genomics, transcriptomics, epigenomics, and proteomics into one systems-level view"
+    ],
+    [
+     "CRISPR analysis",
+     "Evaluates how genetic perturbations affect disease biology at scale — an experimental validation layer"
+    ]
+   ],
+   "note": "Thousands of altered genes are not a finding — knowing which ones matter is.",
+   "kpis": [
+    {
+     "k": "7",
+     "v": "biological-analysis engines"
+    },
+    {
+     "k": "Single-cell",
+     "v": "resolution"
+    },
+    {
+     "k": "Multi-omics",
+     "v": "unified framework"
+    },
+    {
+     "k": "CRISPR",
+     "v": "experimental validation"
+    }
+   ],
+   "narration": "Layer two handles massive biological input, generating publication-grade insight at every stage. It analyzes differential expression, prioritizes the genes that actually matter, maps dysregulated pathways, deconvolves cell types, resolves single cells, integrates multi-omics, and evaluates CRISPR perturbations at scale — an experimental validation layer reinforcing the platform's causal predictions."
+  },
+  {
+   "id": "08_layer3",
+   "sheetName": "08 · Layer 3",
+   "label": "Layer 3 · Causality Engine",
+   "subtitle": "What sets BiRAGAS apart",
+   "color": "#C8A560",
+   "headline": "Layer 3 — Why causality changes everything",
+   "body": "Traditional biological analysis identifies correlations and associations. The causality engine identifies directionality, influence, and intervention potential — distinguishing disease drivers from reactive biology and isolating the targets most likely to produce meaningful therapeutic impact. Multiple causal engines operate together as one integrated system. This is what sets BiRAGAS apart from every other platform in the field.",
+   "tableHeaders": [
+    "Causal engine",
+    "What it does"
+   ],
+   "tableRows": [
+    [
+     "GWAS & Mendelian randomization",
+     "Anchors analysis to inherited genetic variance present from birth — a naturally controlled framework for causal inference"
+    ],
+    [
+     "Temporal analysis",
+     "Maps changes over time to separate the genes that initiate disease from secondary downstream responses"
+    ],
+    [
+     "SIGNOR causality integration",
+     "Integrates validated biological knowledge, reinforcing established findings and flagging novel mechanisms"
+    ],
+    [
+     "Causal DAG construction",
+     "Reconstructs the causal wiring diagram of disease from patient signals and validated evidence"
+    ],
+    [
+     "Centrality calculation",
+     "Identifies the central regulatory nodes with the greatest causal influence across the network"
+    ],
+    [
+     "Causal calculus",
+     "Mathematically validates each relationship to separate true causation from confounding or coincidence"
+    ],
+    [
+     "In-silico perturbation",
+     "Simulates interventions at population and patient level (see next section)"
+    ]
+   ],
+   "note": "Not what is different — but what is causing it.",
+   "kpis": [
+    {
+     "k": "7",
+     "v": "causal-inference engines"
+    },
+    {
+     "k": "Directionality",
+     "v": "not just association"
+    },
+    {
+     "k": "Drivers",
+     "v": "isolated from reactive biology"
+    },
+    {
+     "k": "Validated",
+     "v": "causal relationships only"
+    }
+   ],
+   "narration": "Traditional analysis identifies correlations. The causality engine identifies directionality, influence, and intervention potential — distinguishing disease drivers from reactive biology. Genetic anchoring through Mendelian randomization, temporal ordering, SIGNOR knowledge integration, causal DAG construction, centrality, and mathematical causal calculus operate together as one system. This is what sets BiRAGAS apart."
+  },
+  {
+   "id": "09_perturbation",
+   "sheetName": "09 · Perturbation",
+   "label": "In-Silico Perturbation",
+   "subtitle": "Population forecasting + patient precision",
+   "color": "#10B981",
+   "headline": "In-silico perturbation — two complementary levels",
+   "body": "Using the validated causal network, BiRAGAS simulates therapeutic interventions before any experimental testing begins — at two complementary levels.",
+   "tableHeaders": [
+    "Level",
+    "What it answers"
+   ],
+   "tableRows": [
+    [
+     "Population-level forecasting",
+     "“Does this therapy work broadly?” Simulates interventions across patient populations to predict target impact, resistance potential, and downstream biological responses before experimental testing"
+    ],
+    [
+     "Patient-level stratification",
+     "“Which patients will benefit most?” Simulates interventions per patient to identify which therapeutic strategies are most likely to succeed within specific biological subgroups"
+    ]
+   ],
+   "note": "Answers the impact and the audience of a therapy — in silico, before the lab.",
+   "kpis": [
+    {
+     "k": "2",
+     "v": "complementary levels"
+    },
+    {
+     "k": "Pre-lab",
+     "v": "simulated before testing"
+    },
+    {
+     "k": "Resistance",
+     "v": "forecast in advance"
+    },
+    {
+     "k": "Subgroups",
+     "v": "patient-level precision"
+    }
+   ],
+   "narration": "Using the validated causal network, BiRAGAS simulates therapeutic interventions before experimental testing begins. At the population level it forecasts whether a therapy works broadly — target impact, resistance potential, downstream responses. At the patient level it stratifies, identifying which therapeutic strategies are most likely to succeed within specific biological subgroups."
+  },
+  {
+   "id": "10_layer4",
+   "sheetName": "10 · Layer 4",
+   "label": "Layer 4 · Reporting & CCS",
+   "subtitle": "Causal Confidence Scoring",
+   "color": "#2563EB",
+   "headline": "Layer 4 — Reporting, validation, and the Causal Confidence Score",
+   "body": "On a real acute myeloid leukemia data set, the orchestration layer interprets the objective, selects the required agents, builds the execution plan, and coordinates information across 17 specialized modules and external scientific knowledge sources. As each module completes, BiRAGAS integrates its evidence into a unified causal framework — continuously evaluating the strength and consistency of the evidence and assigning a Causal Confidence Score (CCS) to quantify how strongly each finding is supported.",
+   "tableHeaders": [
+    "Evidence layer integrated",
+    "Contribution to the CCS"
+   ],
+   "tableRows": [
+    [
+     "Differential expression",
+     "The strongest biological signals distinguishing disease from control"
+    ],
+    [
+     "Pathway biology",
+     "Dysregulated processes across the disease system"
+    ],
+    [
+     "Genetic evidence",
+     "Genetically anchored, naturally controlled causal support"
+    ],
+    [
+     "Perturbation analysis",
+     "Simulated intervention responses and dependencies"
+    ],
+    [
+     "Causal inference",
+     "Validated directional relationships in the causal network"
+    ],
+    [
+     "→ Causal Confidence Score",
+     "A single quantified measure of how strongly each finding is supported"
+    ]
+   ],
+   "note": "Rather than isolated results, BiRAGAS grades the strength and consistency of the whole evidence base.",
+   "kpis": [
+    {
+     "k": "CCS",
+     "v": "scored on every finding"
+    },
+    {
+     "k": "17",
+     "v": "modules integrated"
+    },
+    {
+     "k": "AML",
+     "v": "live demonstration cohort"
+    },
+    {
+     "k": "Unified",
+     "v": "causal framework"
+    }
+   ],
+   "narration": "On a real acute myeloid leukemia data set, the orchestration layer coordinates seventeen specialized modules and external knowledge sources. As each completes, BiRAGAS integrates differential expression, pathway biology, genetic evidence, perturbation, and causal inference into one framework — and assigns a Causal Confidence Score to quantify how strongly each finding is supported."
+  },
+  {
+   "id": "11_evidence",
+   "sheetName": "11 · Evidence",
+   "label": "Evidence & Visualizations",
+   "subtitle": "Molecular data → interpretable insight",
+   "color": "#60A5FA",
+   "headline": "Large-scale molecular data, made interpretable",
+   "body": "Rather than presenting thousands of disconnected measurements, BiRAGAS consolidates results into a structured, evidence-grounded insight report — automatically surfacing the genes, pathways, cell populations, and processes most strongly associated with disease. Complementary visualizations validate the same biological system from different angles.",
+   "tableHeaders": [
+    "View",
+    "What it reveals"
+   ],
+   "tableRows": [
+    [
+     "Significant genes",
+     "The strongest biological signals distinguishing disease from control"
+    ],
+    [
+     "Cell-type abundance",
+     "Which cell populations are expanding, contracting, or activating"
+    ],
+    [
+     "Temporal dynamics",
+     "How molecular patterns evolve across disease progression"
+    ],
+    [
+     "Volcano plot",
+     "Genes with the strongest, most statistically significant differences"
+    ],
+    [
+     "MA plot",
+     "Meaningful signal vs. background across the full range of genes — independent validation"
+    ],
+    [
+     "Heat map",
+     "Coordinated expression patterns forming distinct disease signatures"
+    ],
+    [
+     "Disruption summary",
+     "The overall scale of molecular disruption in the disease state"
+    ]
+   ],
+   "note": "Statistical significance, expression magnitude, coordinated behavior, and cellular context — one system, many lenses.",
+   "kpis": [
+    {
+     "k": "7",
+     "v": "complementary evidence views"
+    },
+    {
+     "k": "Volcano+MA",
+     "v": "cross-validated"
+    },
+    {
+     "k": "Automatic",
+     "v": "key findings prioritized"
+    },
+    {
+     "k": "Traceable",
+     "v": "every point sourced"
+    }
+   ],
+   "narration": "Rather than thousands of disconnected measurements, BiRAGAS consolidates results into a structured, evidence-grounded report — surfacing the genes, pathways, cell populations, and processes most strongly associated with disease. Volcano and MA plots, heat maps, cell-type abundance, and temporal dynamics validate the same biological system from complementary angles, turning large-scale molecular data into interpretable insight."
+  },
+  {
+   "id": "12_infrastructure",
+   "sheetName": "12 · Infrastructure",
+   "label": "Infrastructure & Security",
+   "subtitle": "Secure, traceable, enterprise-ready",
+   "color": "#EF4444",
+   "headline": "Enterprise-grade infrastructure behind every discovery",
+   "body": "What appears as a simple scientific workflow is supported by a secure, scalable infrastructure designed to transform biological data into therapeutic decisions with confidence, traceability, and regulatory readiness.",
+   "tableHeaders": [
+    "Control",
+    "What it guarantees"
+   ],
+   "tableRows": [
+    [
+     "Confidential AI architecture",
+     "Scientific discoveries and sensitive data remain protected in use"
+    ],
+    [
+     "SOC2-aligned controls",
+     "Enterprise security posture across the platform"
+    ],
+    [
+     "Intellectual-property protection",
+     "Proprietary methods and results kept secure and owned"
+    ],
+    [
+     "Reproducible & traceable",
+     "A fully traceable evidence trail supporting every finding"
+    ]
+   ],
+   "note": "Confidence, traceability, and regulatory readiness — engineered in, not bolted on.",
+   "kpis": [
+    {
+     "k": "Confidential AI",
+     "v": "protected in use"
+    },
+    {
+     "k": "SOC2",
+     "v": "aligned controls"
+    },
+    {
+     "k": "IP",
+     "v": "protected"
+    },
+    {
+     "k": "Traceable",
+     "v": "end to end"
+    }
+   ],
+   "narration": "What appears as a simple scientific workflow is supported by a secure, scalable infrastructure. Confidential AI architecture, SOC2-aligned controls, and intellectual-property protection ensure that discoveries remain secure, traceable, and enterprise-ready — transforming biological data into therapeutic decisions with confidence, traceability, and regulatory readiness."
+  },
+  {
+   "id": "13_close",
+   "sheetName": "13 · The Answer",
+   "label": "The Answer",
+   "subtitle": "Hours, not years",
+   "color": "#3B82F6",
+   "headline": "From raw data to causal discovery in hours, not years",
+   "body": "Four biological layers. Three technology foundations. One platform. One answer.\nWe are not building another AI model — we are building the infrastructure that finally tells biology's actual story. This is where correlation ends and causation begins.\nThat is BiRAGAS.",
+   "tableHeaders": [
+    "Pillar",
+    "In one line"
+   ],
+   "tableRows": [
+    [
+     "Four biological layers",
+     "Acquisition → analysis → causal inference → validation"
+    ],
+    [
+     "Three technology foundations",
+     "Agentic orchestration · causal engine · secure infrastructure"
+    ],
+    [
+     "One platform",
+     "17 modules, coordinated as a single system"
+    ],
+    [
+     "One answer",
+     "Not what is different — what is causing it"
+    ]
+   ],
+   "note": "Where correlation ends and causation begins.",
+   "kpis": [
+    {
+     "k": "4",
+     "v": "biological layers"
+    },
+    {
+     "k": "3",
+     "v": "technology foundations"
+    },
+    {
+     "k": "17",
+     "v": "specialized modules"
+    },
+    {
+     "k": "Hours",
+     "v": "not years"
+    }
+   ],
+   "narration": "Four biological layers. Three technology foundations. One platform. One answer — from raw data to causal discovery in hours, not years. We are not building another AI model; we are building the infrastructure that finally tells biology's actual story. This is where correlation ends and causation begins. That is BiRAGAS."
+  }
+ ]
+}</script>
+<script>
+(function() {
+  const el = document.getElementById("playbook-data");
+  if (el) { try { window.__PLAYBOOK_DATA__ = JSON.parse(el.textContent); } catch(e) { console.error(e); } }
+})();
+</script>
+</body>
+</html>
